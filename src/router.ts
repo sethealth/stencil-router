@@ -38,7 +38,10 @@ export const createRouter = (opts?: RouterOptions): Router => {
       const params = matchPath(activePath, route.path);
       if (params) {
         if (route.to != null) {
-          push(route.to);
+          const to = (typeof route.to === 'string')
+            ? route.to
+            : route.to(activePath)
+          push(to);
           return match(routes);
         } else {
           return {params, route};

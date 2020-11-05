@@ -33,13 +33,13 @@ export interface RenderProps {
 
 export interface RedirectProps {
   path: RoutePath;
-  to: string;
+  to: string | ((source: string) => string);
 }
 
 export interface RouteEntry {
   path: RoutePath;
   jsx?: any;
-  to?: string;
+  to?: string | ((source: string) => string);
   id?: string;
 }
 
