@@ -15,15 +15,18 @@ export const createRouter = (opts?: RouterOptions): Router => {
   const win = window;
   const url = new URL(win.location.href);
   const parseURL = opts?.parseURL ?? DEFAULT_PARSE_URL;
-  const { state, onChange, dispose } = createStore<InternalRouterState>({
-    url,
-    activePath: parseURL(url)
-  }, (newV, oldV, prop) => {
-    if (prop === 'url') {
-      return newV.href !== oldV.href;
+  const { state, onChange, dispose } = createStore<InternalRouterState>(
+    {
+      url,
+      activePath: parseURL(url),
+    },
+    (newV, oldV, prop) => {
+      if (prop === 'url') {
+        return newV.href !== oldV.href;
+      }
+      return newV !== oldV;
     }
-    return newV !== oldV;
-  });
+  );
 
   const push = (href: string) => {
     history.pushState(null, null as any, href);
@@ -32,19 +35,17 @@ export const createRouter = (opts?: RouterOptions): Router => {
     state.activePath = parseURL(url);
   };
 
-  const match = (routes: RouteEntry[], ) => {
+  const match = (routes: RouteEntry[]) => {
     const { activePath } = state;
     for (let route of routes) {
       const params = matchPath(activePath, route.path);
       if (params) {
         if (route.to != null) {
-          const to = (typeof route.to === 'string')
-            ? route.to
-            : route.to(activePath)
+          const to = typeof route.to === 'string' ? route.to : route.to(activePath);
           push(to);
           return match(routes);
         } else {
-          return {params, route};
+          return { params, route };
         }
       }
     }
@@ -74,7 +75,7 @@ export const createRouter = (opts?: RouterOptions): Router => {
     dispose();
   };
 
-  const router = defaultRouter = {
+  const router = (defaultRouter = {
     Switch,
     get url() {
       return state.url;
@@ -85,7 +86,7 @@ export const createRouter = (opts?: RouterOptions): Router => {
     push,
     onChange: onChange as any,
     dispose: disposeRouter,
-  };
+  });
 
   // Initial update
   navigationChanged();
@@ -114,11 +115,14 @@ export const Route: FunctionalComponent<RouteProps> = (props, children) => {
 };
 
 interface HrefOptions {
-  router?: Router
+  router?: Router;
   onClick?: (ev: MouseEvent) => void | boolean;
 }
 
-export const href = (href: string, opts?: HrefOptions | Router | ((ev: MouseEvent) => void | boolean)) => {
+export const href = (
+  href: string,
+  opts?: HrefOptions | Router | ((ev: MouseEvent) => void | boolean)
+) => {
   let router: Router;
   let onClick: ((ev: MouseEvent) => void | boolean) | undefined;
   if (typeof opts === 'object' && !('Switch' in opts)) {
@@ -155,7 +159,7 @@ export const href = (href: string, opts?: HrefOptions | Router | ((ev: MouseEven
   };
 };
 
-const matchPath = (pathname: string, path: RoutePath): {[params: string]: any} => {
+const matchPath = (pathname: string, path: RoutePath): { [params: string]: any } => {
   if (typeof path === 'string') {
     if (path === pathname) {
       return {};
@@ -163,9 +167,7 @@ const matchPath = (pathname: string, path: RoutePath): {[params: string]: any} =
   } else if (typeof path === 'function') {
     const params = path(pathname);
     if (params) {
-      return params === true
-        ? {}
-        : { ...params };
+      return params === true ? {} : { ...params };
     }
   } else {
     const results = path.exec(pathname);

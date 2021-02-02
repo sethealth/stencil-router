@@ -19,7 +19,7 @@ export interface ParseOptions {
 export interface Key {
   name: string | number;
   prefix: string | null;
-  delimiter: string| null;
+  delimiter: string | null;
   optional: boolean;
   repeat: boolean;
   pattern: string | null;
@@ -37,23 +37,26 @@ export type PathFunction = (data?: { [key: string]: any }, options?: PathFunctio
 /**
  * Default configs.
  */
-const DEFAULT_DELIMITER = '/'
-const DEFAULT_DELIMITERS = './'
+const DEFAULT_DELIMITER = '/';
+const DEFAULT_DELIMITERS = './';
 
 /**
  * The main path matching regexp utility.
  */
-const PATH_REGEXP = new RegExp([
-  // Match escaped characters that would otherwise appear in future matches.
-  // This allows the user to escape special characters that won't transform.
-  '(\\\\.)',
-  // Match Express-style parameters and un-named parameters with a prefix
-  // and optional suffixes. Matches appear as:
-  //
-  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?"]
-  // "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined]
-  '(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?'
-].join('|'), 'g')
+const PATH_REGEXP = new RegExp(
+  [
+    // Match escaped characters that would otherwise appear in future matches.
+    // This allows the user to escape special characters that won't transform.
+    '(\\\\.)',
+    // Match Express-style parameters and un-named parameters with a prefix
+    // and optional suffixes. Matches appear as:
+    //
+    // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?"]
+    // "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined]
+    '(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?',
+  ].join('|'),
+  'g'
+);
 
 /**
  * Parse a string for the raw tokens.
@@ -118,7 +121,7 @@ export const parse = (str: string, options?: ParseOptions): Token[] => {
       optional: optional,
       repeat: repeat,
       partial: partial,
-      pattern: pattern ? escapeGroup(pattern) : '[^' + escapeString(delimiter) + ']+?'
+      pattern: pattern ? escapeGroup(pattern) : '[^' + escapeString(delimiter) + ']+?',
     });
   }
 
@@ -128,14 +131,14 @@ export const parse = (str: string, options?: ParseOptions): Token[] => {
   }
 
   return tokens;
-}
+};
 
 /**
  * Compile a string to a template function for the path.
  */
 export const compile = (str: string, options?: ParseOptions) => {
   return tokensToFunction(parse(str, options));
-}
+};
 
 /**
  * Expose a method for transforming tokens into the path function.
@@ -182,7 +185,9 @@ export const tokensToFunction = (tokens: Token[]): PathFunction => {
           segment = encode(value[j]);
 
           if (!matches[i].test(segment)) {
-            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '"');
+            throw new TypeError(
+              'Expected all "' + token.name + '" to match "' + token.pattern + '"'
+            );
           }
 
           path += (j === 0 ? token.prefix : token.delimiter) + segment;
@@ -195,7 +200,15 @@ export const tokensToFunction = (tokens: Token[]): PathFunction => {
         segment = encode(String(value));
 
         if (!matches[i].test(segment)) {
-          throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but got "' + segment + '"');
+          throw new TypeError(
+            'Expected "' +
+              token.name +
+              '" to match "' +
+              token.pattern +
+              '", but got "' +
+              segment +
+              '"'
+          );
         }
 
         path += token.prefix + segment;
@@ -209,39 +222,41 @@ export const tokensToFunction = (tokens: Token[]): PathFunction => {
         continue;
       }
 
-      throw new TypeError('Expected "' + token.name + '" to be ' + (token.repeat ? 'an array' : 'a string'));
+      throw new TypeError(
+        'Expected "' + token.name + '" to be ' + (token.repeat ? 'an array' : 'a string')
+      );
     }
 
     return path;
-  }
-}
+  };
+};
 
 /**
  * Escape a regular expression string.
  */
 const escapeString = (str: string) => {
   return str.replace(/([.+*?=^!:${}()[\]|/\\])/g, '\\$1');
-}
+};
 
 /**
  * Escape the capturing group by escaping special characters and meaning.
  */
 const escapeGroup = (group: string) => {
   return group.replace(/([=!:$/()])/g, '\\$1');
-}
+};
 
 /**
  * Get the flags for a regexp from the options.
  */
 const flags = (options: RegExpOptions): string => {
   return options && options.sensitive ? '' : 'i';
-}
+};
 
 /**
  * Pull out keys from a regexp.
  */
 const regexpToRegexp = (path: RegExp, keys: Key[]): RegExp => {
-  if (!keys) return path
+  if (!keys) return path;
 
   // Use a negative lookahead to match only capturing groups.
   var groups = path.source.match(/\((?!\?)/g);
@@ -255,18 +270,22 @@ const regexpToRegexp = (path: RegExp, keys: Key[]): RegExp => {
         optional: false,
         repeat: false,
         partial: false,
-        pattern: null
+        pattern: null,
       });
     }
   }
 
   return path;
-}
+};
 
 /**
  * Transform an array into a regexp.
  */
-const arrayToRegexp = (path: Array<string | RegExp>, keys: Key[], options: RegExpOptions): RegExp => {
+const arrayToRegexp = (
+  path: Array<string | RegExp>,
+  keys: Key[],
+  options: RegExpOptions
+): RegExp => {
   var parts = [];
 
   for (var i = 0; i < path.length; i++) {
@@ -274,26 +293,30 @@ const arrayToRegexp = (path: Array<string | RegExp>, keys: Key[], options: RegEx
   }
 
   return new RegExp('(?:' + parts.join('|') + ')', flags(options));
-}
+};
 
 /**
  * Create a path regexp from string input.
  */
 const stringToRegexp = (path: string, keys: Key[], options: RegExpOptions): RegExp => {
   return tokensToRegExp(parse(path, options), keys, options);
-}
+};
 
 /**
  * Expose a function for taking tokens and returning a RegExp.
  */
 export const tokensToRegExp = (tokens: Token[], keys?: Key[], options?: RegExpOptions): RegExp => {
-  options = options || {}
+  options = options || {};
 
   var strict = options.strict;
   var end = options.end !== false;
   var delimiter = escapeString(options.delimiter || DEFAULT_DELIMITER);
   var delimiters = options.delimiters || DEFAULT_DELIMITERS;
-  var endsWith = (<Array<string>>[]).concat(options.endsWith || []).map(escapeString).concat('$').join('|');
+  var endsWith = (<Array<string>>[])
+    .concat(options.endsWith || [])
+    .map(escapeString)
+    .concat('$')
+    .join('|');
   var route = '';
   var isEndDelimited = false;
 
@@ -334,7 +357,7 @@ export const tokensToRegExp = (tokens: Token[], keys?: Key[], options?: RegExpOp
   }
 
   return new RegExp('^' + route, flags(options));
-}
+};
 
 /**
  * Normalize the given path string, returning a regular expression.
@@ -353,4 +376,4 @@ export const pathToRegexp = (path: Path, keys: Key[], options: RegExpOptions): R
   }
 
   return stringToRegexp(path, keys, options);
-}
+};
