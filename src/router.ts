@@ -127,9 +127,9 @@ export const href = (href: string, opts?: HrefOptions | Router | ((ev: MouseEven
   } else if (typeof opts === 'object') {
     router = opts;
   } else {
-    onClick = opts
-    router = defaultRouter;
+    onClick = opts;
   }
+  router = router ?? defaultRouter;
   if (Build.isDev && !router) {
     throw new Error('Router must be defined in href');
   }
