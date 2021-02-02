@@ -113,7 +113,23 @@ export const Route: FunctionalComponent<RouteProps> = (props, children) => {
   } as any;
 };
 
-export const href = (href: string, router: Router | undefined = defaultRouter) => {
+interface HrefOptions {
+  router?: Router
+  onClick?: (ev: MouseEvent) => void | boolean;
+}
+
+export const href = (href: string, opts?: HrefOptions | Router | ((ev: MouseEvent) => void | boolean)) => {
+  let router: Router;
+  let onClick: ((ev: MouseEvent) => void | boolean) | undefined;
+  if (typeof opts === 'object' && !('Switch' in opts)) {
+    router = opts.router;
+    onClick = opts.onClick;
+  } else if (typeof opts === 'object') {
+    router = opts;
+  } else {
+    onClick = opts
+    router = defaultRouter;
+  }
   if (Build.isDev && !router) {
     throw new Error('Router must be defined in href');
   }
@@ -129,6 +145,11 @@ export const href = (href: string, router: Router | undefined = defaultRouter) =
       }
 
       ev.preventDefault();
+      if (onClick) {
+        if (onClick(ev) === false) {
+          return;
+        }
+      }
       router.push(href);
     },
   };
